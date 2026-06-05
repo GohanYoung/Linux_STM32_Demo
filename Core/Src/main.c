@@ -94,9 +94,10 @@ int main(void)
   MX_TIM4_Init();
   /* USER CODE BEGIN 2 */
 
+  HAL_Delay(200);
   Device_OLED_Init();
   Device_OLED_Clear();
-  Device_OLED_ShowString(0, 2, "cs2");
+  Device_OLED_ShowString(2, 2, "cs2 best");
 
   /* USER CODE END 2 */
 

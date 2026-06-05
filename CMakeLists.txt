@@ -92,9 +92,9 @@ add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
 # ==========================================
 # 7. Flash Target (自定义烧录命令)
 # ==========================================
-# 添加一个名为 "flash" 的伪目标
+# 添加一个名为 "flash" 的伪目标，调用 openocd 进行烧录
 add_custom_target(flash
-    COMMAND st-flash --reset write ${PROJECT_NAME}.bin 0x08000000
-    DEPENDS ${PROJECT_NAME}   # 关键：告诉系统在烧录前必须先确保固件是最新的
-    COMMENT "Flashing target with ST-Link..."
+    COMMAND sudo openocd -f interface/stlink-v2.cfg -f target/stm32f1x.cfg -c "program ${PROJECT_NAME}.hex verify reset exit"
+    DEPENDS ${PROJECT_NAME}
+    COMMENT "Flashing target with OpenOCD..."
 )

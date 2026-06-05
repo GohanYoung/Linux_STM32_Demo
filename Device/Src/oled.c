@@ -14,11 +14,11 @@ static void OLED_WriteData(uint8_t data) {
     BSP_I2C1_WriteMem(OLED_I2C_ADDR, 0x40, &data, 1);
 }
 
-/* OLED 初始化序列 (这是 SSD1306 数据手册规定的魔法指令) */
+/* OLED 初始化序列 (SSD1306 数据手册规定) */
 void Device_OLED_Init(void) {
     OLED_WriteCmd(0xAE); // 关闭显示
     OLED_WriteCmd(0x20); // 设置内存寻址模式
-    OLED_WriteCmd(0x10); // 00,水平寻址; 01,垂直寻址; 10,页寻址(默认)
+    OLED_WriteCmd(0x02); // 00,水平寻址; 01,垂直寻址; 10,页寻址(默认)
     OLED_WriteCmd(0xB0); // 为页寻址模式设置页起始地址,0-7
     OLED_WriteCmd(0xC8); // 设置 COM 输出扫描方向
     OLED_WriteCmd(0x00); // 设置低列地址
@@ -29,10 +29,10 @@ void Device_OLED_Init(void) {
     OLED_WriteCmd(0xA1); // 设置线段重映射
     OLED_WriteCmd(0xA6); // 正常显示/反显 (0xA7为反显)
     OLED_WriteCmd(0xA8); // 设置多路复用率(1 to 64)
-    OLED_WriteCmd(0x3F); // 1/64 duty
+    OLED_WriteCmd(0x3F); // 1/32 duty (适配128x32屏幕)
     OLED_WriteCmd(0xD3); // 设置显示偏移
     OLED_WriteCmd(0x00); // 不偏移
-    OLED_WriteCmd(0xd5); // 设置显示时钟分频比例/振荡器频率
+    OLED_WriteCmd(0xD5); // 设置显示时钟分频比例/振荡器频率
     OLED_WriteCmd(0x80); // 设置分频比
     OLED_WriteCmd(0xD9); // 设置预充电周期
     OLED_WriteCmd(0x22); 
@@ -60,9 +60,9 @@ void Device_OLED_Clear(void) {
 }
 
 static void OLED_SetPos(uint8_t x, uint8_t y) {
-    OLED_WriteCmd(0xB0 + y); // 设置页地址 (Page)
+    OLED_WriteCmd(0xB0 + y);                 // 设置页地址 (Page)
     OLED_WriteCmd(((x & 0xF0) >> 4) | 0x10); // 设置列高位地址
-    OLED_WriteCmd(x & 0x0F);                 // 设置列低位地址
+    OLED_WriteCmd((x & 0x0F) | 0x00);        // 设置列低位地址
 }
 
 /* * 对外 API：在指定位置显示一个字符 (8x16大小)
