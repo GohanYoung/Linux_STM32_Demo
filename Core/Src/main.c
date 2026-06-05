@@ -22,6 +22,9 @@
 #include "tim.h"
 #include "gpio.h"
 #include "oled.h"
+#include "dht11.h"
+#include <stdio.h>
+
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -94,21 +97,37 @@ int main(void)
   MX_TIM4_Init();
   /* USER CODE BEGIN 2 */
 
-  HAL_Delay(200);
-  Device_OLED_Init();
-  Device_OLED_Clear();
-  Device_OLED_ShowString(2, 2, "cs2 best");
-
   /* USER CODE END 2 */
 
-  /* Infinite loop */
-  /* USER CODE BEGIN WHILE */
-  while (1)
-  {
-    /* USER CODE END WHILE */
+  // ... 底层初始化 ...
+    HAL_Delay(200); // 屏幕等待
+    Device_OLED_Init();
+    Device_OLED_Clear();
+    
+    Device_DHT11_Init(); 
+    
+    SensorDHT11_t env_sensor = {0};
+    char display_buf[20]; // 字符串缓冲区
 
-    /* USER CODE BEGIN 3 */
-  }
+    while (1) {
+        /* USER CODE BEGIN 3 */
+        
+        // 读取传感器数据
+        if (Device_DHT11_Read(&env_sensor) == DEV_OK) {
+            // 读取成功，格式化并显示
+            sprintf(display_buf, "TEMP: %.1f C", env_sensor.temperature);
+            Device_OLED_ShowString(2, 2, display_buf);
+            
+            sprintf(display_buf, "HUMI: %.1f %%", env_sensor.humidity);
+            Device_OLED_ShowString(4, 2, display_buf);
+        } else {
+            // 读取失败，提示错误
+            Device_OLED_ShowString(20, 0, "DHT11 ERROR!");
+            Device_OLED_ShowString(20, 2, "            "); // 清空下一行
+        }
+
+        // DHT11 采样频率不能太快，手册规定最快 1 秒 1 次，我们这里延时 1.5 秒
+        HAL_Delay(1500);
   /* USER CODE END 3 */
 }
 

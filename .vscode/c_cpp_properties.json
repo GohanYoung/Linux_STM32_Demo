@@ -1,7 +1,7 @@
 {
     "configurations": [
         {
-            "name": "Linux",
+            "name": "STM32 Linux GCC",
             "includePath": [
                 "${workspaceFolder}/**"
             ],
@@ -9,10 +9,11 @@
                 "STM32F103xB",
                 "USE_HAL_DRIVER"
             ],
-            "compilerPath": "/usr/bin/gcc",
-            "cStandard": "c17",
+            "compilerPath": "/usr/bin/arm-none-eabi-gcc",
+            "cStandard": "gnu11",
             "cppStandard": "gnu++14",
-            "intelliSenseMode": "linux-gcc-x64"
+            "intelliSenseMode": "linux-gcc-arm",
+            "compileCommands": "${workspaceFolder}/build/compile_commands.json"
         }
     ],
     "version": 4
