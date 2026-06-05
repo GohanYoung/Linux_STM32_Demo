@@ -55,8 +55,8 @@ int8_t Device_DHT11_Read(SensorDHT11_t *sensor_data) {
     BSP_Delay_us(30);
 
     // 3. 检查传感器的应答信号 (传感器拉低 80us，再拉高 80us，如果没有先拉底再拉高，说明没应答)
-    if (Wait_Pin_State(0, 100) != DEV_OK) return DEV_ERROR; 
-    if (Wait_Pin_State(1, 100) != DEV_OK) return DEV_ERROR; 
+    if (Wait_Pin_State(0, 200) != DEV_OK) return DEV_ERROR; 
+    if (Wait_Pin_State(1, 200) != DEV_OK) return DEV_ERROR; 
 
     // 4. 开始接收 40 位数据
     for (i = 0; i < 5; i++) {

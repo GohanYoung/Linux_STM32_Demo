@@ -69,36 +69,52 @@ static void OLED_SetPos(uint8_t x, uint8_t y) {
  */
 void Device_OLED_ShowChar(uint8_t x, uint8_t y, char chr) {
     uint8_t i;
-    // 获取字符在字库中的索引
-    uint8_t font_idx = Get_Font_Index(chr); 
+    uint8_t index = chr - 0x20; // 计算字符在字体数组中的索引
     
-    // 防越界保护：如果 X 轴画不下了，自动换行到下一页 (y+2)
-    if (x > 120) { x = 0; y += 2; } 
-
-    // 1. 画字符的上半部分 (前 8 个字节)
-    OLED_SetPos(x, y); 
-    for(i = 0; i < 8; i++) {
-        OLED_WriteData(F8X16[font_idx][i]);
+    // 检查字符是否在可打印范围内
+    if(index >= sizeof(oled_font_8x16)/sizeof(oled_font_8x16[0]))
+    {
+        index = 0; // 显示空格代替
     }
     
-    // 2. 画字符的下半部分 (后 8 个字节)
-    OLED_SetPos(x, y + 1); 
-    for(i = 0; i < 8; i++) {
-        OLED_WriteData(F8X16[font_idx][i + 8]);
+    // 设置显示位置
+    OLED_SetPos(x, y);
+    
+    // 显示上半部分(第1页)
+    for(i=0; i<FONT_8X16_WIDTH; i++)
+    {
+        OLED_WriteData(oled_font_8x16[index][i]);
+    }
+    
+    // 设置下一页位置
+    OLED_SetPos(x, y+1);
+    
+    // 显示下半部分(第2页)
+    for(i=0; i<FONT_8X16_WIDTH; i++)
+    {
+        OLED_WriteData(oled_font_8x16[index][i+8]);
     }
 }
 
 /* * 对外 API：显示字符串
  */
-void Device_OLED_ShowString(uint8_t x, uint8_t y, char *chr) {
-    uint8_t j = 0;
-    while (chr[j] != '\0') { // 遇到字符串结束符 '\0' 停止
-        Device_OLED_ShowChar(x, y, chr[j]);
-        x += 8; // 每个字符宽 8 个像素，光标向右移 8
-        if (x > 120) { 
-            x = 0;   // 换行
-            y += 2;  // 8x16 字符高度占 2 个页
+void Device_OLED_ShowString(uint8_t x, uint8_t y, char *str) {
+    while(*str)
+    {
+        Device_OLED_ShowChar(x, y, *str);
+        x += FONT_8X16_WIDTH; // 每个字符占8列
+        if(x > 120) // 自动换行
+        {
+            x = 0;
+            y += 2; // 每个字符占2页
         }
-        j++;
+        str++;
     }
+}
+
+void Device_OLED_ShowNum(uint8_t x, uint8_t y, uint32_t num, uint8_t len)
+{
+    char str[11]; // 最大支持10位数字
+    sprintf(str, "%0*lu", len, num);
+    Device_OLED_ShowString(x, y, str);
 }

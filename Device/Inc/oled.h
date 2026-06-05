@@ -10,6 +10,8 @@
 void Device_OLED_Init(void);
 void Device_OLED_Clear(void);
 void Device_OLED_ShowChar(uint8_t x, uint8_t y, char chr);
-void Device_OLED_ShowString(uint8_t x, uint8_t y, char *chr);
+void Device_OLED_ShowString(uint8_t x, uint8_t y, char *str);
+void Device_OLED_ShowNum(uint8_t x, uint8_t y, uint32_t num, uint8_t len);
+
 
 #endif
