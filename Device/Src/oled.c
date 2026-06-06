@@ -111,10 +111,3 @@ void Device_OLED_ShowString(uint8_t x, uint8_t y, char *str) {
         str++;
     }
 }
-
-void Device_OLED_ShowNum(uint8_t x, uint8_t y, uint32_t num, uint8_t len)
-{
-    char str[11]; // 最大支持10位数字
-    sprintf(str, "%0*lu", len, num);
-    Device_OLED_ShowString(x, y, str);
-}
