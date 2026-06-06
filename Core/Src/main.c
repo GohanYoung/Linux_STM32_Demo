@@ -21,9 +21,6 @@
 #include "i2c.h"
 #include "tim.h"
 #include "gpio.h"
-#include "oled.h"
-#include "dht11.h"
-#include <stdio.h>
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -99,18 +96,13 @@ int main(void)
 
   /* USER CODE END 2 */
 
-  // ... 底层初始化 ...
-    HAL_Delay(200); // 屏幕等待
-    Device_OLED_Init();
-    Device_OLED_Clear();
+  /* Infinite loop */
+  /* USER CODE BEGIN WHILE */
+  while (1)
+  {
+    /* USER CODE END WHILE */
 
-    Device_DHT11_Init(); 
-    
-    SensorDHT11_t env_sensor = {0};
-    char display_buf[20]; // 字符串缓冲区
-
-    while (1) {
-        /* USER CODE BEGIN 3 */
+    /* USER CODE BEGIN 3 */
       Device_OLED_Clear();
       if (Device_DHT11_Read(&env_sensor) == DEV_OK) {
             // --- 验证温度范围 ---
