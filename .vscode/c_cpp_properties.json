@@ -3,7 +3,9 @@
         {
             "name": "STM32 Linux GCC",
             "includePath": [
-                "${workspaceFolder}/**"
+                "${workspaceFolder}/**",
+                "${workspaceFolder}/Middlewares/Third_Party/FreeRTOS/Source/include",
+                "${workspaceFolder}/Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS"
             ],
             "defines": [
                 "STM32F103xB",
@@ -14,6 +16,7 @@
             "cppStandard": "gnu++14",
             "intelliSenseMode": "linux-gcc-arm",
             "compileCommands": "${workspaceFolder}/build/compile_commands.json"
+            
         }
     ],
     "version": 4

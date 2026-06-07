@@ -1,5 +1,6 @@
 #include "dht11.h"
 #include "bsp_dht11.h"
+#include "bsp_sys.h"
 
 void Device_DHT11_Init(void) {
     BSP_DHT11_HW_Init();    // 开启定时器
@@ -48,20 +49,26 @@ int8_t Device_DHT11_Read(SensorDHT11_t *sensor_data) {
 
     // 1. 单片机发送起始信号：拉低至少 18ms
     BSP_DHT11_SetPin(0);
-    BSP_Delay_us(20000); // 20ms
+    // 调用 BSP 封装的延时，底层自动触发 OS 任务调度，完美避开代码耦合
+    BSP_Sys_Delay(20);
     
-    // 2. 单片机释放总线，等待传感器响应 (延时 20~40us)
+    // 单片机释放总线，等待传感器响应 (延时 20~40us)
     BSP_DHT11_SetPin(1);
-    BSP_Delay_us(30);
+    BSP_Delay_us(30);                                   //BSP_Delay_us和BSP_Sys_Delay有什么区别？？？？？
+
+    // 2. 调用 BSP 封装的临界区，保护微秒级时序不被打断
+    BSP_Sys_EnterCritical();
 
     // 3. 检查传感器的应答信号 (传感器拉低 80us，再拉高 80us，如果没有先拉底再拉高，说明没应答)
-    if (Wait_Pin_State(0, 200) != DEV_OK) return DEV_ERROR; 
-    if (Wait_Pin_State(1, 200) != DEV_OK) return DEV_ERROR; 
+    if (Wait_Pin_State(0, 100) != DEV_OK) { BSP_Sys_ExitCritical(); return DEV_ERROR; }
+    if (Wait_Pin_State(1, 100) != DEV_OK) { BSP_Sys_ExitCritical(); return DEV_ERROR; } 
 
     // 4. 开始接收 40 位数据
     for (i = 0; i < 5; i++) {
-        if (Read_Byte(&buf[i]) != DEV_OK) return DEV_ERROR;
+        if (Read_Byte(&buf[i]) != DEV_OK) { BSP_Sys_ExitCritical(); return DEV_ERROR; }
     }
+
+    BSP_Sys_ExitCritical();
 
     // 5. 释放总线，结束通信
     BSP_DHT11_SetPin(1);
