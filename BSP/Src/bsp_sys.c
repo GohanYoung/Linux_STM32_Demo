@@ -8,6 +8,7 @@
 #include "bsp_sys.h" 
 #include "stm32f1xx_hal.h" 
 #include "cmsis_os.h"  // 所有的 OS 依赖全部被拦截在这里！
+#include "tim.h"
 
 /**
  * @brief   获取系统时间戳
@@ -165,4 +166,36 @@ void BSP_Delay_us(uint32_t us) {
     
     // 利用无符号整型的溢出特性，完美处理 32 位计数器翻转的问题
     while ((DWT_CYCCNT - start_tick) < ticks); 
+}
+
+//开启中断定时器4
+void BSP_Sys_TIM4_Start(void) {
+    // 此时硬件定时器作为系统公用资源被启动
+    HAL_TIM_Base_Start_IT(&htim4); 
+}
+
+/*
+中断调度(后续有其他硬件中断可以添加钩子来处理其他业务函数)
+*/
+// 定义一个静态的函数指针变量，初始为空
+static BSP_Timer_Callback_t sys_hook = NULL;
+// 接收上层传来的函数地址（将这个函数挂载钩子上）
+void BSP_RegisterCallback(BSP_Timer_Callback_t callback) {
+    sys_hook = callback;
+}
+// 硬件定时器溢出中断回调
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
+    // 1. 处理 HAL 库的系统时钟
+    if (htim->Instance == TIM1) {
+        HAL_IncTick(); 
+    }
+    
+    // 2. 处理 TIM4 的 10ms 周期中断
+    if (htim->Instance == TIM4) {
+        // 判断钩子上有没有挂函数，如果有，就执行它！
+        // 此时 BSP 完全不知道执行的是电机控制还是别的东西，实现了 100% 解耦
+        if (sys_hook != NULL) {
+            sys_hook(); 
+        }
+    }
 }

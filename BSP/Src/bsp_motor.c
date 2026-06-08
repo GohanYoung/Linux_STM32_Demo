@@ -2,13 +2,6 @@
 #include "tim.h"  // 必须在 CubeMX 开启 TIM2 和 TIM3
 #include "gpio.h" // 包含方向引脚的宏定义
 
-// 引脚在 CubeMX 中已命名为 MOTOR_IN1 和 MOTOR_IN2
-#ifndef MOTOR_IN1_Pin
-#define MOTOR_IN1_Pin GPIO_PIN_1
-#define MOTOR_IN1_GPIO_Port GPIOA
-#define MOTOR_IN2_Pin GPIO_PIN_2
-#define MOTOR_IN2_GPIO_Port GPIOA
-#endif
 
 void BSP_Motor_HW_Init(void) {
     // 启动 TIM2 的通道 1 作为 PWM 输出
@@ -50,3 +43,4 @@ void BSP_Motor_SetPWM(int16_t pwm_val) {
     // 3. 设置 TIM2 通道 1 的 CCR 寄存器，改变占空比
     __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_1, (uint32_t)pwm_val);
 }
+

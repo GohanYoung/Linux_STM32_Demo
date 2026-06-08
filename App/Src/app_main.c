@@ -18,12 +18,12 @@ int8_t dht11_status = DEV_ERROR;
 void Task_MotorControl(void const * argument) {
     int16_t new_target_rpm = 0;
     while (1) {
-        // 非阻塞检查队列
-        if (BSP_Queue_Receive(RpmQueue, &new_target_rpm, 0)) {
+        // 永远死等队列，哪怕等一万年。只要不来数据，这个线程就不消耗 CPU
+        // 0xFFFFFFFF 代表无限等待 (osWaitForever)
+        if (BSP_Queue_Receive(RpmQueue, &new_target_rpm, 0xFFFFFFFF)) {
+            // 收到蓝牙或按键发来的新指令，更新底层目标值
             Device_Motor_SetTargetRPM(new_target_rpm);
-        }
-        Device_Motor_ControlLoop(); 
-        BSP_Sys_Delay(10); 
+        } 
     }
 }
 
@@ -86,9 +86,11 @@ void App_Main_Run(void) {
     BSP_Sys_Delay(200); 
     Device_OLED_Init();
     Device_OLED_Clear();
-    Device_Motor_Init();
+    Device_Motor_Init();    //已经将控制函数挂载钩子上
     Device_DHT11_Init();
     Device_Motor_SetTargetRPM(120); 
+    //开启中断TIM4
+    BSP_Sys_TIM4_Start();
 
     // 创建纯净版 IPC 资源
     DhtMutex = BSP_Mutex_Create();

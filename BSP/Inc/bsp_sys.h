@@ -36,5 +36,13 @@ void BSP_Thread_Create(BSP_TaskFunction_t task_func, const char* name, uint32_t 
 void BSP_Delay_us_Init(void);
 //2. 完美的微秒延时实现
 void BSP_Delay_us(uint32_t us);
+//3. 中断定时器4开始计数
+void BSP_Sys_TIM4_Start(void);
+
+
+// 1. 定义一个函数指针类型，代表 10ms 中断的回调函数
+typedef void (*BSP_Timer_Callback_t)(void);
+// 2. 暴露一个注册接口，让上层把函数地址传进来
+void BSP_RegisterCallback(BSP_Timer_Callback_t callback);
 
 #endif /* __BSP_SYS_H */

@@ -1,5 +1,6 @@
 #include "encoder_motor.h"
 #include "bsp_motor.h"
+#include "bsp_sys.h"
 #include "pid.h"
 
 // 电机物理参数 (根据 MG310 实际参数调整)
@@ -16,6 +17,9 @@ void Device_Motor_Init(void) {
     // 1. 初始化底层定时器
     BSP_Motor_HW_Init();
     
+    // 关键一步：把当前的控制回路函数“注册”到底层中断的钩子上去！
+    BSP_RegisterCallback(Device_Motor_ControlLoop);
+
     // 2. 清理状态数据
     g_motor.target_rpm = 0;
     g_motor.real_rpm = 0;
