@@ -20,8 +20,8 @@
  */
 typedef struct {
     uint8_t  is_online;      // 0:掉线, 1:在线
-    float    temperature;    // 温度值
-    float    humidity;       // 湿度值
+    int16_t  temperature;    // 温度值 ×10 (如 253 表示 25.3℃)
+    int16_t  humidity;       // 湿度值 ×10 (如 450 表示 45.0%)
     uint32_t last_update_ms; // 上次更新的时间戳 (用于应用层判断数据是否过期)
 } SensorDHT11_t;
 
@@ -29,11 +29,10 @@ typedef struct {
  * @brief 电机控制与状态反馈对象
  */
 typedef struct {
-    uint8_t  is_running;     // 0:停止, 1:运行
-    int16_t  target_pwm;     // 目标 PWM 占空比 (比如 0-1000)
-    int16_t  current_pwm;    // 当前输出的 PWM 占空比
-    int32_t  encoder_count;  // 编码器累计脉冲数
-    int16_t  real_rpm;       // 计算出的真实转速 (转/分钟)
+    int16_t target_rpm;  // 目标转速 (RPM)
+    int16_t real_rpm;    // 当前实际转速 (RPM)
+    int16_t current_pwm; // 当前下发的 PWM 值
+    int32_t total_pulse; // 累计总脉冲数 (用于位置控制/里程计，当前仅做监控)
 } MotorState_t;
 
 /* =======================================================

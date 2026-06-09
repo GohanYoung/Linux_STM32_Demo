@@ -1,27 +1,29 @@
 #include "pid.h"
 
-void PID_Init(PID_Controller_t *pid, float p, float i, float d, float out_max, float integral_max) {
-    pid->Kp = p;
-    pid->Ki = i;
-    pid->Kd = d;
-    pid->target = 0.0f;
-    pid->current = 0.0f;
-    pid->error = 0.0f;
-    pid->last_error = 0.0f;
-    pid->integral = 0.0f;
-    pid->out = 0.0f;
+void PID_Init(PID_Controller_t *pid, float p, float i, float d, float dt,
+              int32_t out_max, int32_t integral_max) {
+    // 初始化时做一次浮点→定点转换，dt 吸收进 Ki 和 Kd
+    pid->Kp_scaled = (int32_t)(p * PID_SCALE);
+    pid->Ki_scaled = (int32_t)(i * dt * PID_SCALE);
+    pid->Kd_scaled = (int32_t)((d / dt) * PID_SCALE);
+    pid->target = 0;
+    pid->current = 0;
+    pid->error = 0;
+    pid->last_error = 0;
+    pid->integral = 0;
+    pid->out = 0;
     pid->out_max = out_max;
     pid->out_min = -out_max;
-    pid->integral_max = integral_max;
+    pid->integral_max = (int64_t)integral_max * PID_SCALE;
 }
 
-float PID_Calc(PID_Controller_t *pid, float target, float current) {
+int32_t PID_Calc(PID_Controller_t *pid, int32_t target, int32_t current) {
     pid->target = target;
     pid->current = current;
     pid->error = pid->target - pid->current;
     
-    // 1. 误差积分累加
-    pid->integral += pid->error;
+    // 1. 累加误差 (dt 已在 Ki_scaled 中吸收，无需重复乘 dt)
+    pid->integral += (int64_t)pid->error;
     
     // 2. 积分限幅抗饱和 (Anti-windup)
     if (pid->integral > pid->integral_max) {
@@ -30,15 +32,15 @@ float PID_Calc(PID_Controller_t *pid, float target, float current) {
         pid->integral = -pid->integral_max;
     }
     
-    // 3. 位置式 PID 核心差分方程计算
-    pid->out = (pid->Kp * pid->error) + 
-               (pid->Ki * pid->integral) + 
-               (pid->Kd * (pid->error - pid->last_error));
-               
-    // 4. 更新历史误差
+    // 3. 全整数 PID 差分方程 (位置式)
+    int64_t p_term = (int64_t)pid->Kp_scaled * pid->error;
+    int64_t i_term = (int64_t)pid->Ki_scaled * pid->integral;
+    int64_t d_term = (int64_t)pid->Kd_scaled * (pid->error - pid->last_error);
+    
+    pid->out = (int32_t)((p_term + i_term + d_term) >> PID_SCALE_BITS);
     pid->last_error = pid->error;
     
-    // 5. 最终输出控制量限幅
+    // 4. 输出限幅
     if (pid->out > pid->out_max) {
         pid->out = pid->out_max;
     } else if (pid->out < pid->out_min) {

@@ -3,7 +3,6 @@
 #include "bsp_sys.h"
 
 void Device_DHT11_Init(void) {
-    BSP_DHT11_HW_Init();    // 开启定时器
     BSP_DHT11_SetPin(1);    // 默认释放总线，保持高电平
     BSP_Delay_us(1000);     // 上电稳定延时
 }
@@ -76,8 +75,8 @@ int8_t Device_DHT11_Read(SensorDHT11_t *sensor_data) {
     // 6. 数据校验 (最后 1 字节 = 前 4 字节之和)
     if (buf[0] + buf[1] + buf[2] + buf[3] == buf[4]) {
         // DHT11 数据格式：湿度整数(0), 湿度小数(1), 温度整数(2), 温度小数(3)
-        sensor_data->humidity = buf[0] + buf[1] / 10.0f;
-        sensor_data->temperature = buf[2] + buf[3] / 10.0f;
+        sensor_data->humidity    = (int16_t)(buf[0] * 10 + buf[1]);
+        sensor_data->temperature = (int16_t)(buf[2] * 10 + buf[3]);
         sensor_data->is_online = 1;
         return DEV_OK;
     } else {

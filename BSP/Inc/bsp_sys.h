@@ -3,9 +3,12 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include "stm32f1xx_hal.h" 
 
 // 获取系统运行毫秒数
 uint32_t BSP_Sys_GetTick(void);
+//用HAL库延迟
+void BSP_HAL_Delay(uint32_t ms);
 
 // 毫秒级延时 (底层自动判断：有 RTOS 就引发任务调度，无 RTOS 就死等)
 void BSP_Sys_Delay(uint32_t ms);
@@ -42,7 +45,11 @@ void BSP_Sys_TIM4_Start(void);
 
 // 1. 定义一个函数指针类型，代表 10ms 中断的回调函数
 typedef void (*BSP_Timer_Callback_t)(void);
-// 2. 暴露一个注册接口，让上层把函数地址传进来
+// 暴露一个注册接口，让上层把函数地址传进来
 void BSP_RegisterCallback(BSP_Timer_Callback_t callback);
+
+// HAL 定时器中断统一调度器，由 HAL_TIM_PeriodElapsedCallback 调用
+// 内部根据 htim->Instance 分发到对应业务钩子
+void BSP_Sys_TIM_ISR_Dispatcher(TIM_HandleTypeDef *htim);
 
 #endif /* __BSP_SYS_H */

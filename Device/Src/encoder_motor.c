@@ -10,8 +10,14 @@
 // 控制周期 10ms (需要在调用 Device_Motor_ControlLoop 的定时器中保证这个频率)
 #define CONTROL_PERIOD_MS 10.0f 
 
-EncoderMotor_t g_motor;
 static PID_Controller_t speed_pid;
+static MotorState_t g_motor;
+
+void Device_Motor_GetState(MotorState_t *out_state) {
+    BSP_Sys_EnterCritical();       // 关中断，防止 ISR 写到一半
+    *out_state = g_motor;          // 原子拷贝整个结构体
+    BSP_Sys_ExitCritical();        // 开中断
+}
 
 void Device_Motor_Init(void) {
     // 1. 初始化底层定时器
@@ -27,9 +33,8 @@ void Device_Motor_Init(void) {
     g_motor.total_pulse = 0;
     
     // 3. 初始化 PID 算法
-    // 参数说明：Kp=5.0, Ki=0.5, Kd=0.1, 输出限幅=1000(PWM最大值), 积分限幅=800
-    // 注意：这里的 P, I, D 是预设初始值，实际需要根据电机特性曲线用上位机调参
-    PID_Init(&speed_pid, 5.0f, 0.5f, 0.1f, 1000.0f, 800.0f);
+    // Kp=5.0, Ki=50.0, Kd=0.001, dt=0.01, 输出限幅=1000, 积分限幅=800
+    PID_Init(&speed_pid, 5.0f, 50.0f, 0.001f, 0.01f, 1000, 800);
 }
 
 void Device_Motor_SetTargetRPM(int16_t target_rpm) {
@@ -39,19 +44,18 @@ void Device_Motor_SetTargetRPM(int16_t target_rpm) {
 void Device_Motor_ControlLoop(void) {
     // 1. 从 BSP 层获取增量脉冲
     int16_t delta_pulse = BSP_Motor_GetEncoderDelta();
-    g_motor.total_pulse += delta_pulse; // 累计用于里程计算
+    g_motor.total_pulse += delta_pulse;
 
-    // 2. 将脉冲增量转换为真实的物理转速 RPM
-    // 公式: RPM = (脉冲增量 / 编码器一圈总脉冲) * (60秒 / 控制周期秒)
-    // RPM = (delta_pulse / 1320) * (60 / 0.01) = (delta_pulse * 6000) / 1320
-    g_motor.real_rpm = (int16_t)(((float)delta_pulse * 6000.0f) / MOTOR_PULSE_PER_ROUND);
+    // 2. 脉冲增量 → 转速 RPM (纯整数，无浮点)
+    //    公式: RPM = delta_pulse * (60000 / (880 * 10))
+    //    化简: RPM = delta_pulse * 75 / 11
+    g_motor.real_rpm = (int16_t)(((int32_t)delta_pulse * 75) / 11);
 
-    // 3. 将目标速度和实际速度喂给 PID，得出需要的控制量 (PWM)
-    float pid_out = PID_Calc(&speed_pid, (float)g_motor.target_rpm, (float)g_motor.real_rpm);
+    // 3. 整数 PID 计算 (运算在 ISR 中全硬件整数执行，无 FPU 开销)
+    int32_t pid_out = PID_Calc(&speed_pid, (int32_t)g_motor.target_rpm, (int32_t)g_motor.real_rpm);
     
-    // 4. 将浮点控制量转为整数并缓存记录
     g_motor.current_pwm = (int16_t)pid_out;
     
-    // 5. 调用 BSP 层将 PWM 下发到硬件
+    // 4. 下发 PWM (BSP 内部自动根据 htim2.Init.Period 限幅)
     BSP_Motor_SetPWM(g_motor.current_pwm);
 }

@@ -38,7 +38,10 @@ void BSP_Motor_SetPWM(int16_t pwm_val) {
     }
 
     // 2. 限幅保护 (防止传入异常值导致寄存器溢出)
-    if (pwm_val > 1000) pwm_val = 1000;
+    // 自动从 TIM 句柄获取 ARR 值，与 CubeMX 配置保持同步
+    if (pwm_val > (int16_t)(htim2.Init.Period + 1)) {
+        pwm_val = (int16_t)(htim2.Init.Period + 1);
+    }
 
     // 3. 设置 TIM2 通道 1 的 CCR 寄存器，改变占空比
     __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_1, (uint32_t)pwm_val);

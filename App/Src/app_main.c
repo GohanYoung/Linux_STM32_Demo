@@ -62,10 +62,13 @@ void Task_OLED(void const * argument) {
     SensorDHT11_t local_sensor = {0};
     int8_t local_status;
 
+    MotorState_t motor_snapshot;
+    
     while (1) {
-        int16_t tar_rpm = g_motor.target_rpm;
-        int16_t cur_rpm = g_motor.real_rpm;
-        int16_t cur_pwm = g_motor.current_pwm;
+        Device_Motor_GetState(&motor_snapshot);
+        int16_t tar_rpm = motor_snapshot.target_rpm;
+        int16_t cur_rpm = motor_snapshot.real_rpm;
+        int16_t cur_pwm = motor_snapshot.current_pwm;
 
         if (BSP_Mutex_Lock(DhtMutex, 10)) {
             local_sensor = env_sensor;
@@ -73,7 +76,18 @@ void Task_OLED(void const * argument) {
             BSP_Mutex_Unlock(DhtMutex);
         }
 
-        // ... (此处省略相同的 snprintf 和 Oled 显示代码) ...
+        // 第一行：目标转速 & 实际转速
+        snprintf(display_buf, sizeof(display_buf), "T:%4d R:%4d", tar_rpm, cur_rpm);
+        Device_OLED_ShowString(20, 2, display_buf);
+
+        // 第二行：PWM & 温湿度（DHT11 离线则显示 "--"）
+        if (local_status == DEV_OK) {
+            snprintf(display_buf, sizeof(display_buf), "P:%4d T:%02d H:%02d",
+                     cur_pwm, local_sensor.temperature / 10, local_sensor.humidity / 10);
+        } else {
+            snprintf(display_buf, sizeof(display_buf), "P:%4d T:-- H:--", cur_pwm);
+        }
+        Device_OLED_ShowString(20, 4, display_buf);
         
         BSP_Sys_Delay(200); 
     }
@@ -83,7 +97,8 @@ void Task_OLED(void const * argument) {
 // 启动入口
 // ==========================================
 void App_Main_Run(void) {
-    BSP_Sys_Delay(200); 
+    BSP_HAL_Delay(200); 
+    BSP_Delay_us_Init();  
     Device_OLED_Init();
     Device_OLED_Clear();
     Device_Motor_Init();    //已经将控制函数挂载钩子上
