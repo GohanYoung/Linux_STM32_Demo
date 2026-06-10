@@ -52,6 +52,9 @@ void Task_Bluetooth(void const * argument) {
     char tx_buf[48];
     int16_t rpm;
 
+    BSP_Sys_Delay(500);
+    BSP_UART_SendString("READY\r\n");
+
     while (1) {
         while (BSP_UART_ReadByte(&ch)) {
             if (ch == '\r' || ch == '\n') {
