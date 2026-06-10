@@ -12,7 +12,7 @@ void BSP_HAL_Delay(uint32_t ms){
 }
 
 void BSP_Sys_Delay(uint32_t ms) {
-    osDelay(ms);
+    osDelay(pdMS_TO_TICKS(ms));
 }
 
 void BSP_Sys_EnterCritical(void) {
@@ -29,7 +29,7 @@ BSP_MutexHandle BSP_Mutex_Create(void) {
 
 bool BSP_Mutex_Lock(BSP_MutexHandle mutex, uint32_t timeout_ms) {
     if (mutex == NULL) return false;
-    uint32_t ticks = (timeout_ms == 0xFFFFFFFF) ? portMAX_DELAY : timeout_ms;
+    uint32_t ticks = (timeout_ms == 0xFFFFFFFF) ? portMAX_DELAY : pdMS_TO_TICKS(timeout_ms);
     return (xSemaphoreTake((SemaphoreHandle_t)mutex, ticks) == pdTRUE);
 }
 
@@ -45,13 +45,13 @@ BSP_QueueHandle BSP_Queue_Create(uint32_t length, uint32_t item_size) {
 
 bool BSP_Queue_Send(BSP_QueueHandle queue, const void* item, uint32_t timeout_ms) {
     if (queue == NULL) return false;
-    uint32_t ticks = (timeout_ms == 0xFFFFFFFF) ? portMAX_DELAY : timeout_ms;
+    uint32_t ticks = (timeout_ms == 0xFFFFFFFF) ? portMAX_DELAY : pdMS_TO_TICKS(timeout_ms);
     return (xQueueSend((QueueHandle_t)queue, item, ticks) == pdTRUE);
 }
 
 bool BSP_Queue_Receive(BSP_QueueHandle queue, void* item, uint32_t timeout_ms) {
     if (queue == NULL) return false;
-    uint32_t ticks = (timeout_ms == 0xFFFFFFFF) ? portMAX_DELAY : timeout_ms;
+    uint32_t ticks = (timeout_ms == 0xFFFFFFFF) ? portMAX_DELAY : pdMS_TO_TICKS(timeout_ms);
     return (xQueueReceive((QueueHandle_t)queue, item, ticks) == pdTRUE);
 }
 

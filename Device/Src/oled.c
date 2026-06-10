@@ -69,30 +69,24 @@ static void OLED_SetPos(uint8_t x, uint8_t y) {
  */
 void Device_OLED_ShowChar(uint8_t x, uint8_t y, char chr) {
     uint8_t i;
-    uint8_t index = chr - 0x20; // 计算字符在字体数组中的索引
-    
-    // 检查字符是否在可打印范围内
-    if(index >= sizeof(oled_font_8x16)/sizeof(oled_font_8x16[0]))
-    {
-        index = 0; // 显示空格代替
-    }
+    const uint8_t *bitmap = font_get_bitmap(chr);
     
     // 设置显示位置
     OLED_SetPos(x, y);
     
     // 显示上半部分(第1页)
-    for(i=0; i<FONT_8X16_WIDTH; i++)
+    for(i = 0; i < FONT_8X16_WIDTH; i++)
     {
-        OLED_WriteData(oled_font_8x16[index][i]);
+        OLED_WriteData(bitmap[i]);
     }
     
     // 设置下一页位置
-    OLED_SetPos(x, y+1);
+    OLED_SetPos(x, y + 1);
     
     // 显示下半部分(第2页)
-    for(i=0; i<FONT_8X16_WIDTH; i++)
+    for(i = 0; i < FONT_8X16_WIDTH; i++)
     {
-        OLED_WriteData(oled_font_8x16[index][i+8]);
+        OLED_WriteData(bitmap[i + FONT_8X16_WIDTH]);
     }
 }
 

@@ -49,7 +49,7 @@ void Task_Bluetooth(void const * argument) {
     uint8_t cmd_idx = 0;
     uint8_t ch;
     MotorState_t motor_snapshot;
-    char tx_buf[32];
+    char tx_buf[48];
     int16_t rpm;
 
     while (1) {
@@ -87,11 +87,19 @@ void Task_Bluetooth(void const * argument) {
                     }
                     else if (strcmp(cmd_buf, "STATUS") == 0 || strcmp(cmd_buf, "status") == 0) {
                         Device_Motor_GetState(&motor_snapshot);
+                        int8_t temp_status;
+                        if (BSP_Mutex_Lock(DhtMutex, 10)) {
+                            temp_status = dht11_status;
+                            BSP_Mutex_Unlock(DhtMutex);
+                        } else {
+                            temp_status = DEV_ERROR;
+                        }
                         snprintf(tx_buf, sizeof(tx_buf),
-                                 "T:%d R:%d P:%d\r\n",
+                                 "T:%d R:%d P:%d D:%d\r\n",
                                  motor_snapshot.target_rpm,
                                  motor_snapshot.real_rpm,
-                                 motor_snapshot.current_pwm);
+                                 motor_snapshot.current_pwm,
+                                 temp_status);
                         BSP_UART_SendString(tx_buf);
                     }
                     else {
@@ -128,7 +136,7 @@ void Task_OLED(void const * argument) {
 
         // 第一行：目标转速 & 实际转速
         snprintf(display_buf, sizeof(display_buf), "T:%4d R:%4d", tar_rpm, cur_rpm);
-        Device_OLED_ShowString(20, 2, display_buf);
+        Device_OLED_ShowString(0, 0, display_buf);
 
         // 第二行：PWM & 温湿度（DHT11 离线则显示 "--"）
         if (local_status == DEV_OK) {
@@ -137,7 +145,7 @@ void Task_OLED(void const * argument) {
         } else {
             snprintf(display_buf, sizeof(display_buf), "P:%4d T:-- H:--", cur_pwm);
         }
-        Device_OLED_ShowString(20, 4, display_buf);
+        Device_OLED_ShowString(0, 2, display_buf);
         
         BSP_Sys_Delay(200); 
     }
@@ -154,7 +162,7 @@ void App_Main_Run(void) {
     Device_OLED_Clear();
     Device_Motor_Init();    //已经将控制函数挂载钩子上
     Device_DHT11_Init();
-    Device_Motor_SetTargetRPM(120); 
+    Device_Motor_SetTargetRPM(0); 
     //开启中断TIM4
     BSP_Sys_TIM4_Start();
 
