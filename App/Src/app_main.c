@@ -3,7 +3,9 @@
 #include "encoder_motor.h"
 #include "oled.h"
 #include "dht11.h"
+#include "bsp_uart.h"
 #include <stdio.h>
+#include <string.h>
 
 // 全局资源句柄 (类型已经被抽象为 void*)
 BSP_MutexHandle DhtMutex;
@@ -26,7 +28,7 @@ void Task_MotorControl(void const * argument) {
         } 
     }
 }
-
+//Device_DHT11_Read中临界区终端无法进入，可能会错过一次电机的PWM纠正
 void Task_DHT11(void const * argument) {
     SensorDHT11_t temp_sensor = {0};
     int8_t temp_status;
@@ -43,24 +45,72 @@ void Task_DHT11(void const * argument) {
 }
 
 void Task_Bluetooth(void const * argument) {
-    int16_t simulated_rpm_cmd = 300; 
+    char cmd_buf[16];
+    uint8_t cmd_idx = 0;
+    uint8_t ch;
+    MotorState_t motor_snapshot;
+    char tx_buf[32];
+    int16_t rpm;
+
     while (1) {
-        // 等待硬件串口中断的数据 (此处暂用死循环延时模拟)
-        BSP_Sys_Delay(5000); 
-        
-        // 解析到新指令后，扔进队列
-        BSP_Queue_Send(RpmQueue, &simulated_rpm_cmd, 10);
-        
-        // 模拟指令不断变化
-        simulated_rpm_cmd += 50; 
-        if(simulated_rpm_cmd > 800) simulated_rpm_cmd = 100;
+        while (BSP_UART_ReadByte(&ch)) {
+            if (ch == '\r' || ch == '\n') {
+                if (cmd_idx > 0) {
+                    cmd_buf[cmd_idx] = '\0';
+
+                    if (sscanf(cmd_buf, "FW %hd", &rpm) == 1) {
+                        BSP_Queue_Send(RpmQueue, &rpm, 0);
+                        snprintf(tx_buf, sizeof(tx_buf), "OK FW=%d\r\n", rpm);
+                        BSP_UART_SendString(tx_buf);
+                    }
+                    else if (sscanf(cmd_buf, "fw %hd", &rpm) == 1) {
+                        BSP_Queue_Send(RpmQueue, &rpm, 0);
+                        snprintf(tx_buf, sizeof(tx_buf), "OK FW=%d\r\n", rpm);
+                        BSP_UART_SendString(tx_buf);
+                    }
+                    else if (sscanf(cmd_buf, "RV %hd", &rpm) == 1) {
+                        rpm = -rpm;
+                        BSP_Queue_Send(RpmQueue, &rpm, 0);
+                        snprintf(tx_buf, sizeof(tx_buf), "OK RV=%d\r\n", -rpm);
+                        BSP_UART_SendString(tx_buf);
+                    }
+                    else if (sscanf(cmd_buf, "rv %hd", &rpm) == 1) {
+                        rpm = -rpm;
+                        BSP_Queue_Send(RpmQueue, &rpm, 0);
+                        snprintf(tx_buf, sizeof(tx_buf), "OK RV=%d\r\n", -rpm);
+                        BSP_UART_SendString(tx_buf);
+                    }
+                    else if (strcmp(cmd_buf, "STOP") == 0 || strcmp(cmd_buf, "stop") == 0) {
+                        rpm = 0;
+                        BSP_Queue_Send(RpmQueue, &rpm, 0);
+                        BSP_UART_SendString("STOP\r\n");
+                    }
+                    else if (strcmp(cmd_buf, "STATUS") == 0 || strcmp(cmd_buf, "status") == 0) {
+                        Device_Motor_GetState(&motor_snapshot);
+                        snprintf(tx_buf, sizeof(tx_buf),
+                                 "T:%d R:%d P:%d\r\n",
+                                 motor_snapshot.target_rpm,
+                                 motor_snapshot.real_rpm,
+                                 motor_snapshot.current_pwm);
+                        BSP_UART_SendString(tx_buf);
+                    }
+                    else {
+                        BSP_UART_SendString("ERR\r\n");
+                    }
+                    cmd_idx = 0;
+                }
+            } else if (cmd_idx < sizeof(cmd_buf) - 1) {
+                cmd_buf[cmd_idx++] = ch;
+            }
+        }
+        BSP_Sys_Delay(50);
     }
 }
 
 void Task_OLED(void const * argument) {
-    char display_buf[20];
+    char display_buf[32];
     SensorDHT11_t local_sensor = {0};
-    int8_t local_status;
+    int8_t local_status = DEV_ERROR;
 
     MotorState_t motor_snapshot;
     
@@ -98,7 +148,8 @@ void Task_OLED(void const * argument) {
 // ==========================================
 void App_Main_Run(void) {
     BSP_HAL_Delay(200); 
-    BSP_Delay_us_Init();  
+    BSP_Delay_us_Init(); //开启DWT(微秒)
+    BSP_UART_Init(); 
     Device_OLED_Init();
     Device_OLED_Clear();
     Device_Motor_Init();    //已经将控制函数挂载钩子上

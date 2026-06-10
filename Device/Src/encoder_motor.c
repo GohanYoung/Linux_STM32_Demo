@@ -6,9 +6,9 @@
 // 电机物理参数 (根据 MG310 实际参数调整)
 // 假设减速比 1:20，编码器线数 11，TIM3配置为 4倍频
 // 轴转一圈脉冲数 = 11 * 20 * 4 = 880
-#define MOTOR_PULSE_PER_ROUND 880.0f
-// 控制周期 10ms (需要在调用 Device_Motor_ControlLoop 的定时器中保证这个频率)
-#define CONTROL_PERIOD_MS 10.0f 
+// #define MOTOR_PULSE_PER_ROUND 880.0f
+// // 控制周期 10ms (需要在调用 Device_Motor_ControlLoop 的定时器中保证这个频率)
+// #define CONTROL_PERIOD_MS 10.0f 
 
 static PID_Controller_t speed_pid;
 static MotorState_t g_motor;

@@ -53,7 +53,7 @@ int8_t Device_DHT11_Read(SensorDHT11_t *sensor_data) {
     
     // 单片机释放总线，等待传感器响应 (延时 20~40us)
     BSP_DHT11_SetPin(1);
-    BSP_Delay_us(30);                                   //BSP_Delay_us和BSP_Sys_Delay有什么区别？？？？？
+    BSP_Delay_us(30);                             
 
     // 2. 调用 BSP 封装的临界区，保护微秒级时序不被打断
     BSP_Sys_EnterCritical();

@@ -69,7 +69,7 @@ void BSP_Thread_Create(BSP_TaskFunction_t task_func, const char* name, uint32_t 
 // 系统时钟频率 (STM32F1 通常为 72,000,000)
 extern uint32_t SystemCoreClock; 
 
-// 1. DWT 初始化函数 (需要在 App_Main_Run 最开始调用一次)
+// 1. DWT 初始化函数 (需要在 App_Main_Run 最开始调用一次)(生成微秒级别的计数)
 void BSP_Delay_us_Init(void) {
     // 开启 Core Debug 模块的 Trace 功能
     DEM_CR |= DEM_CR_TRCENA; 
@@ -101,7 +101,7 @@ void BSP_Sys_TIM4_Start(void) {
 */
 // 定义一个静态的函数指针变量，初始为空
 static BSP_Timer_Callback_t sys_hook = NULL;
-// 接收上层传来的函数地址（将这个函数挂载钩子上）
+// 将函数挂载钩子上的函数
 void BSP_RegisterCallback(BSP_Timer_Callback_t callback) {
     sys_hook = callback;
 }
