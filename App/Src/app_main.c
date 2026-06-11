@@ -175,7 +175,7 @@ void App_Main_Run(void) {
 
     // 创建纯净版线程 (优先级数字越大优先级越高，具体视 OS 映射而定)
     BSP_Thread_Create(Task_MotorControl, "Motor", 128, 4);
-    BSP_Thread_Create(Task_Bluetooth,    "BT",    128, 3);
+    BSP_Thread_Create(Task_Bluetooth,    "BT",    256, 3);
     BSP_Thread_Create(Task_OLED,         "OLED",  256, 2);
     BSP_Thread_Create(Task_DHT11,        "DHT",   128, 1);
 }
