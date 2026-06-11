@@ -3,6 +3,13 @@
 #include "cmsis_os.h"  // 所有的 OS 依赖全部被拦截在这里！
 #include "tim.h"
 
+void BSP_SET_PC13_test(){
+    // 点亮PC13 LED（拉低电平）
+    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
+    HAL_Delay(100);
+    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_SET);
+}
+
 uint32_t BSP_Sys_GetTick(void) {
     return HAL_GetTick();
 }

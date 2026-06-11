@@ -5,6 +5,8 @@
 #include <stdbool.h>
 #include "stm32f1xx_hal.h" 
 
+void BSP_SET_PC13_test();
+
 // 获取系统运行毫秒数
 uint32_t BSP_Sys_GetTick(void);
 //用HAL库延迟
