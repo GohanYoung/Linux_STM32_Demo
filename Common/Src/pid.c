@@ -7,6 +7,7 @@ void PID_Init(PID_Controller_t *pid, float p, float i, float d, float dt,
     pid->Ki_scaled = (int32_t)(i * dt * PID_SCALE);
     pid->Kd_scaled = (int32_t)((d / dt) * PID_SCALE);
     pid->target = 0;
+    pid->last_target = 0;
     pid->current = 0;
     pid->error = 0;
     pid->last_error = 0;
@@ -21,6 +22,13 @@ int32_t PID_Calc(PID_Controller_t *pid, int32_t target, int32_t current) {
     pid->target = target;
     pid->current = current;
     pid->error = pid->target - pid->current;
+    
+    // 0. 目标值切换时清零积分，防止上一阶段的积分残留干扰
+    if (target != pid->last_target) {
+        pid->integral = 0;
+        pid->last_error = 0;
+        pid->last_target = target;
+    }
     
     // 1. 累加误差 (dt 已在 Ki_scaled 中吸收，无需重复乘 dt)
     pid->integral += (int64_t)pid->error;

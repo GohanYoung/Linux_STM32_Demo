@@ -2,7 +2,7 @@
 #include "tim.h"  // 必须在 CubeMX 开启 TIM2 和 TIM3
 #include "gpio.h" // 包含方向引脚的宏定义
 
-
+//电机初始化
 void BSP_Motor_HW_Init(void) {
     // 启动 TIM2 的通道 1 作为 PWM 输出
     HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);

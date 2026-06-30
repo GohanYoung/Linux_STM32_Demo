@@ -14,6 +14,7 @@ typedef struct {
     int32_t Kd_scaled;   // Kd / dt * PID_SCALE (dt 已吸收进系数)
     
     int32_t target;      // 目标设定值
+    int32_t last_target; // 上一次目标值，用于检测目标切换
     int32_t current;     // 当前反馈值
     
     int32_t error;       // 当前误差 e(k)

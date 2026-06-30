@@ -16,14 +16,12 @@ volatile int32_t motor_cycle_count = 0;
 void Task_MotorControl(void const * argument) {
     while (1) {
         motor_cycle_count++;
-        Device_Motor_SetTargetRPM(100);
-        BSP_Sys_Delay(3000);
-        Device_Motor_SetTargetRPM(0);
-        BSP_Sys_Delay(3000);
-        Device_Motor_SetTargetRPM(-100);
-        BSP_Sys_Delay(3000);
-        Device_Motor_SetTargetRPM(0);
-        BSP_Sys_Delay(3000);
+        Device_Motor_SetTargetRPM(200);
+        BSP_Sys_Delay(1000);
+        
+        Device_Motor_SetTargetRPM(-200);
+        BSP_Sys_Delay(1000);
+        
     }
 }
 
@@ -85,7 +83,6 @@ void App_Main_Run(void) {
     Device_OLED_Clear();
     Device_Motor_Init();
     Device_DHT11_Init();
-    Device_Motor_SetTargetRPM(0); 
     BSP_Sys_TIM4_Start();
 
     DhtMutex = BSP_Mutex_Create();
