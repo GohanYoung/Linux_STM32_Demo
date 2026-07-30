@@ -37,9 +37,8 @@ add_compile_definitions(STM32F103xB USE_HAL_DRIVER)
 # ==========================================
 # 搜集用户源码
 file(GLOB_RECURSE USER_SOURCES
-    "App/Src/*.c"
+    "APP/Src/*.c"
     "BSP/Src/*.c"
-    "Common/Src/*.c"
     "Device/Src/*.c"
 )
 
@@ -51,9 +50,8 @@ add_subdirectory(cmake/stm32cubemx)
 
 # 添加头文件路径
 target_include_directories(${PROJECT_NAME} PRIVATE
-    App/Inc
+    APP/Inc
     BSP/Inc
-    Common/Inc
     Device/Inc  
 )
 
