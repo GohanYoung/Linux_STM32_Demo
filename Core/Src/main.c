@@ -21,9 +21,7 @@
 #include "i2c.h"
 #include "tim.h"
 #include "gpio.h"
-#include "oled.h"
-#include "dht11.h"
-#include <stdio.h>
+#include "app_main.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -99,54 +97,10 @@ int main(void)
 
   /* USER CODE END 2 */
 
-  // ... 底层初始化 ...
-    HAL_Delay(200); // 屏幕等待
-    Device_OLED_Init();
-    Device_OLED_Clear();
+  app_main();
 
-    Device_DHT11_Init(); 
-    
-    SensorDHT11_t env_sensor = {0};
-    char display_buf[20]; // 字符串缓冲区
+  /* USER CODE BEGIN 3 */
 
-    while (1) {
-        /* USER CODE BEGIN 3 */
-      Device_OLED_Clear();
-      if (Device_DHT11_Read(&env_sensor) == DEV_OK) {
-            // --- 验证温度范围 ---
-            if (env_sensor.temperature >= 0 && env_sensor.temperature <= 50) {
-                // 拆分浮点数：整数部分和小数部分
-                int temp_int = (int)env_sensor.temperature;                      // 获取整数部分
-                int temp_frac = (int)(env_sensor.temperature * 10.0f) % 10;      // 获取小数点后一位
-                
-                // 用 %d.%d 完美平替 %.1f
-                snprintf(display_buf, sizeof(display_buf), "TEMP: %d.%d C", temp_int, temp_frac);
-                Device_OLED_ShowString(20, 1, display_buf);
-            } else {
-                Device_OLED_ShowString(20, 1, "TEMP: ERR");
-            }
-            
-            // --- 验证湿度范围 ---
-            if (env_sensor.humidity >= 20 && env_sensor.humidity <= 90) {
-                int humi_int = (int)env_sensor.humidity;
-                int humi_frac = (int)(env_sensor.humidity * 10.0f) % 10;
-                
-                snprintf(display_buf, sizeof(display_buf), "HUMI: %d.%d %%", humi_int, humi_frac);
-                Device_OLED_ShowString(20, 3, display_buf);
-            } else {
-                Device_OLED_ShowString(20, 3, "HUMI: ERR");
-            }
-      }  
-      else {
-            // 读取失败，提示错误
-            Device_OLED_Clear();
-            Device_OLED_ShowString(15, 1, "DHT11 ERROR!");
-            Device_OLED_ShowString(15, 3, "Check wiring!"); 
-      }
-
-      // DHT11 采样频率不能太快，手册规定最快 1 秒 1 次，我们这里延时 1.5 秒
-      HAL_Delay(1500);
-    }
   /* USER CODE END 3 */
 }
 
