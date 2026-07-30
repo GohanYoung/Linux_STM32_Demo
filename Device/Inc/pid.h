@@ -2,32 +2,29 @@
 #define __PID_H
 
 #include <stdint.h>
+#include "qmath.h"
 
 typedef struct {
-    float kp;
-    float ki;
-    float kd;
+    q15_t kp;
+    q15_t ki;
+    q15_t kd;
 
-    float target;
-    float feedback;
+    q15_t target;
+    q15_t feedback;
 
-    float error;
-    float error_prev;
-    float error_prev2;
+    q15_t error;
+    q15_t error_prev;
+    q15_t error_prev2;
 
-    float integral;
-    float integral_max;
-    float integral_min;
-
-    float output;
-    float output_max;
-    float output_min;
+    q15_t output;
+    q15_t output_max;
+    q15_t output_min;
 } PID_Controller_t;
 
-void PID_Init(PID_Controller_t *pid, float kp, float ki, float kd,
-              float out_max, float out_min);
-float PID_Compute(PID_Controller_t *pid, float target, float feedback);
-void PID_Reset(PID_Controller_t *pid);
-void PID_SetTunings(PID_Controller_t *pid, float kp, float ki, float kd);
+void  PID_Init(PID_Controller_t *pid, q15_t kp, q15_t ki, q15_t kd,
+               q15_t out_max, q15_t out_min);
+q15_t PID_Compute(PID_Controller_t *pid, q15_t target, q15_t feedback);
+void  PID_Reset(PID_Controller_t *pid);
+void  PID_SetTunings(PID_Controller_t *pid, q15_t kp, q15_t ki, q15_t kd);
 
 #endif

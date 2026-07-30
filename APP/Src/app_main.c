@@ -1,50 +1,211 @@
 #include "app_main.h"
 #include "oled.h"
 #include "dht11.h"
+#include "motor.h"
+#include "pid.h"
 #include "bsp_sys.h"
 #include <stdio.h>
+#include <string.h>
 
-void app_main(void)
+/* =======================================================
+ * 全局系统状态
+ * ======================================================= */
+static SystemState_t g_sys_state = {0};
+
+/* =======================================================
+ * App_Init: 应用层初始化 (在 RTOS 调度器启动前调用)
+ * ======================================================= */
+void App_Init(void)
 {
-    BSP_Delay_ms(200);
+    memset(&g_sys_state, 0, sizeof(g_sys_state));
 
     Device_OLED_Init();
     Device_OLED_Clear();
+    Device_OLED_ShowString(0, 0, "System Boot...");
 
     Device_DHT11_Init();
+    Motor_Init();
 
-    SensorDHT11_t env_sensor = {0};
-    char display_buf[20];
+    BSP_Delay_ms(500);
+    Device_OLED_Clear();
+}
 
-    while (1) {
-        Device_OLED_Clear();
+/* =======================================================
+ * Task_Safety: 安全监控任务 (高优先级)
+ *   周期: 10ms
+ *   职责: 监测电机超速、系统故障，紧急停机
+ * ======================================================= */
+void AppTask_Safety(void *argument)
+{
+    (void)argument;
 
-        if (Device_DHT11_Read(&env_sensor) == DEV_OK) {
-            if (env_sensor.temperature >= 0 && env_sensor.temperature <= 50) {
-                int temp_int = (int)env_sensor.temperature;
-                int temp_frac = (int)(env_sensor.temperature * 10.0f) % 10;
+    for (;;) {
+        if (Motor_IsRunning()) {
+            osMutexAcquire(Mutex_StateHandle, osWaitForever);
+            int16_t rpm = g_sys_state.motor_rpm;
+            osMutexRelease(Mutex_StateHandle);
 
-                snprintf(display_buf, sizeof(display_buf), "TEMP: %d.%d C", temp_int, temp_frac);
-                Device_OLED_ShowString(20, 1, display_buf);
-            } else {
-                Device_OLED_ShowString(20, 1, "TEMP: ERR");
+            if (rpm > 1000 || rpm < -1000) {
+                osMutexAcquire(Mutex_StateHandle, osWaitForever);
+                g_sys_state.system_fault = 1;
+                osMutexRelease(Mutex_StateHandle);
+
+                Motor_Stop();
             }
-
-            if (env_sensor.humidity >= 20 && env_sensor.humidity <= 90) {
-                int humi_int = (int)env_sensor.humidity;
-                int humi_frac = (int)(env_sensor.humidity * 10.0f) % 10;
-
-                snprintf(display_buf, sizeof(display_buf), "HUMI: %d.%d %%", humi_int, humi_frac);
-                Device_OLED_ShowString(20, 3, display_buf);
-            } else {
-                Device_OLED_ShowString(20, 3, "HUMI: ERR");
-            }
-        } else {
-            Device_OLED_Clear();
-            Device_OLED_ShowString(15, 1, "DHT11 ERROR!");
-            Device_OLED_ShowString(15, 3, "Check wiring!");
         }
 
-        BSP_Delay_ms(1500);
+        osDelay(10);
+    }
+}
+
+/* =======================================================
+ * Task_MotorPID: 电机 PID 控制任务 (高于普通优先级)
+ *   周期: 10ms (100Hz)
+ *   职责: 执行 PID 速度环计算，更新当前转速
+ * ======================================================= */
+void AppTask_MotorPID(void *argument)
+{
+    (void)argument;
+    TickType_t xLastWakeTime = xTaskGetTickCount();
+    const TickType_t xPeriod = pdMS_TO_TICKS(10);
+
+    for (;;) {
+        vTaskDelayUntil(&xLastWakeTime, xPeriod);
+
+        osMutexAcquire(Mutex_StateHandle, osWaitForever);
+        uint8_t running = Motor_IsRunning();
+        uint8_t fault   = g_sys_state.system_fault;
+        osMutexRelease(Mutex_StateHandle);
+
+        if (running && !fault) {
+            Motor_PID_Update();
+
+            osMutexAcquire(Mutex_StateHandle, osWaitForever);
+            g_sys_state.motor_rpm = Motor_GetCurrentRPM();
+            osMutexRelease(Mutex_StateHandle);
+        }
+    }
+}
+
+/* =======================================================
+ * Task_CommRX: 指令接收任务 (普通优先级)
+ *   触发: 消息队列阻塞等待
+ *   职责: 解析并执行控制指令
+ * ======================================================= */
+void AppTask_CommRX(void *argument)
+{
+    (void)argument;
+    ControlMsg_t msg;
+
+    for (;;) {
+        if (osMessageQueueGet(Queue_ControlCmdHandle, &msg, NULL, osWaitForever) == osOK) {
+            switch (msg.cmd) {
+            case CMD_SET_MOTOR_RPM:
+                Motor_SetTargetRPM(msg.value);
+
+                osMutexAcquire(Mutex_StateHandle, osWaitForever);
+                g_sys_state.motor_target_rpm = msg.value;
+                osMutexRelease(Mutex_StateHandle);
+                break;
+
+            case CMD_START_MOTOR:
+                Motor_Start();
+                break;
+
+            case CMD_STOP_MOTOR:
+                Motor_Stop();
+                break;
+
+            default:
+                break;
+            }
+        }
+    }
+}
+
+/* =======================================================
+ * Task_Sensor: 传感器采集任务 (低于普通优先级)
+ *   周期: 1000ms
+ *   职责: 读取 DHT11 温湿度数据，存入共享状态
+ * ======================================================= */
+void AppTask_Sensor(void *argument)
+{
+    (void)argument;
+    SensorDHT11_t local;
+
+    for (;;) {
+        if (Device_DHT11_Read(&local) == DEV_OK) {
+            osMutexAcquire(Mutex_StateHandle, osWaitForever);
+            memcpy(&g_sys_state.sensor, &local, sizeof(SensorDHT11_t));
+            g_sys_state.sensor.is_online = 1;
+            osMutexRelease(Mutex_StateHandle);
+        } else {
+            osMutexAcquire(Mutex_StateHandle, osWaitForever);
+            g_sys_state.sensor.is_online = 0;
+            osMutexRelease(Mutex_StateHandle);
+        }
+
+        osDelay(1000);
+    }
+}
+
+/* =======================================================
+ * Task_Status: 状态显示任务 (最低优先级)
+ *   周期: 500ms
+ *   职责: 在 OLED 上刷新系统状态、传感器数据、电机信息
+ * ======================================================= */
+void AppTask_Status(void *argument)
+{
+    (void)argument;
+    char buf[20];
+    SensorDHT11_t local_sensor;
+    int16_t  local_rpm;
+    uint8_t  local_fault;
+
+    for (;;) {
+        osMutexAcquire(Mutex_StateHandle, osWaitForever);
+        memcpy(&local_sensor, &g_sys_state.sensor, sizeof(SensorDHT11_t));
+        local_rpm    = g_sys_state.motor_rpm;
+        local_fault  = g_sys_state.system_fault;
+        osMutexRelease(Mutex_StateHandle);
+
+        Device_OLED_Clear();
+
+        /* Row 0: 系统状态 */
+        if (local_fault) {
+            Device_OLED_ShowString(0, 0, "SYS: FAULT!");
+        } else {
+            Device_OLED_ShowString(0, 0, "SYS: OK");
+        }
+
+        /* Row 1: 温度 */
+        if (local_sensor.is_online) {
+            q15_t temp_q15 = Q15_FROM_FLOAT(local_sensor.temperature);
+            snprintf(buf, sizeof(buf), "TEMP: %d.%d C",
+                     Q15_INTEGER(temp_q15), Q15_FRAC1(temp_q15));
+        } else {
+            snprintf(buf, sizeof(buf), "TEMP: --.- C");
+        }
+        Device_OLED_ShowString(0, 1, buf);
+
+        /* Row 2: 湿度 */
+        if (local_sensor.is_online) {
+            q15_t humi_q15 = Q15_FROM_FLOAT(local_sensor.humidity);
+            snprintf(buf, sizeof(buf), "HUMI: %d.%d %%",
+                     Q15_INTEGER(humi_q15), Q15_FRAC1(humi_q15));
+        } else {
+            snprintf(buf, sizeof(buf), "HUMI: --.- %%");
+        }
+        Device_OLED_ShowString(0, 2, buf);
+
+        /* Row 3: 电机状态 */
+        if (Motor_IsRunning()) {
+            snprintf(buf, sizeof(buf), "MOTOR: %d RPM", local_rpm);
+        } else {
+            snprintf(buf, sizeof(buf), "MOTOR: STOP");
+        }
+        Device_OLED_ShowString(0, 3, buf);
+
+        osDelay(500);
     }
 }

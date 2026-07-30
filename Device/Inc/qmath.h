@@ -56,7 +56,7 @@ typedef int32_t q15_t;
 #define Q15_INTEGER(q)      ((int16_t)((q) >> Q15_SCALE))
 
 /* 提取 1 位小数 (用于 "XX.X" 格式显示) */
-#define Q15_FRAC1(q)        ((int)((((q) & Q15_FRAC_MASK) * 10 + (Q15_FACTOR / 2)) >> Q15_SCALE))
+#define Q15_FRAC1(q)        ((int)((((q) & Q15_FRAC_MASK) * 10 + 16384) >> Q15_SCALE))
 
 /* --- 限幅 --- */
 #define Q15_CLAMP(val, lo, hi)  \

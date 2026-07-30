@@ -51,7 +51,7 @@
 osThreadId_t Task_SafetyHandle;
 const osThreadAttr_t Task_Safety_attributes = {
   .name = "Task_Safety",
-  .stack_size = 256 * 4,
+  .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityHigh,
 };
 /* Definitions for Task_MotorPID */
@@ -72,14 +72,14 @@ const osThreadAttr_t Task_CommRX_attributes = {
 osThreadId_t Task_SensorHandle;
 const osThreadAttr_t Task_Sensor_attributes = {
   .name = "Task_Sensor",
-  .stack_size = 256 * 4,
+  .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityBelowNormal,
 };
 /* Definitions for Task_Status */
 osThreadId_t Task_StatusHandle;
 const osThreadAttr_t Task_Status_attributes = {
   .name = "Task_Status",
-  .stack_size = 256 * 4,
+  .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityLow,
 };
 /* Definitions for Queue_ControlCmd */
@@ -174,98 +174,27 @@ void MX_FREERTOS_Init(void) {
 
 }
 
-/* USER CODE BEGIN Header_AppTask_Safety */
-/**
-  * @brief  Function implementing the Task_Safety thread.
-  * @param  argument: Not used
-  * @retval None
-  */
-/* USER CODE END Header_AppTask_Safety */
-void AppTask_Safety(void *argument)
-{
-  /* USER CODE BEGIN AppTask_Safety */
-  /* Infinite loop */
-  for(;;)
-  {
-    osDelay(1);
-  }
-  /* USER CODE END AppTask_Safety */
-}
+/* USER CODE BEGIN AppTask_Safety */
+/* Implementation moved to APP/Src/app_main.c */
+/* USER CODE END AppTask_Safety */
 
-/* USER CODE BEGIN Header_AppTask_MotorPID */
-/**
-* @brief Function implementing the Task_MotorPID thread.
-* @param argument: Not used
-* @retval None
-*/
-/* USER CODE END Header_AppTask_MotorPID */
-void AppTask_MotorPID(void *argument)
-{
-  /* USER CODE BEGIN AppTask_MotorPID */
-  /* Infinite loop */
-  for(;;)
-  {
-    osDelay(1);
-  }
-  /* USER CODE END AppTask_MotorPID */
-}
+/* USER CODE BEGIN AppTask_MotorPID */
+/* Implementation moved to APP/Src/app_main.c */
+/* USER CODE END AppTask_MotorPID */
 
-/* USER CODE BEGIN Header_AppTask_CommRX */
-/**
-* @brief Function implementing the Task_CommRX thread.
-* @param argument: Not used
-* @retval None
-*/
-/* USER CODE END Header_AppTask_CommRX */
-void AppTask_CommRX(void *argument)
-{
-  /* USER CODE BEGIN AppTask_CommRX */
-  /* Infinite loop */
-  for(;;)
-  {
-    osDelay(1);
-  }
-  /* USER CODE END AppTask_CommRX */
-}
+/* USER CODE BEGIN AppTask_CommRX */
+/* Implementation moved to APP/Src/app_main.c */
+/* USER CODE END AppTask_CommRX */
 
-/* USER CODE BEGIN Header_AppTask_Sensor */
-/**
-* @brief Function implementing the Task_Sensor thread.
-* @param argument: Not used
-* @retval None
-*/
-/* USER CODE END Header_AppTask_Sensor */
-void AppTask_Sensor(void *argument)
-{
-  /* USER CODE BEGIN AppTask_Sensor */
-  /* Infinite loop */
-  for(;;)
-  {
-    osDelay(1);
-  }
-  /* USER CODE END AppTask_Sensor */
-}
+/* USER CODE BEGIN AppTask_Sensor */
+/* Implementation moved to APP/Src/app_main.c */
+/* USER CODE END AppTask_Sensor */
 
-/* USER CODE BEGIN Header_AppTask_Status */
-/**
-* @brief Function implementing the Task_Status thread.
-* @param argument: Not used
-* @retval None
-*/
-/* USER CODE END Header_AppTask_Status */
-void AppTask_Status(void *argument)
-{
-  /* USER CODE BEGIN AppTask_Status */
-  /* Infinite loop */
-  for(;;)
-  {
-    osDelay(1);
-  }
-  /* USER CODE END AppTask_Status */
-}
+/* USER CODE BEGIN AppTask_Status */
+/* Implementation moved to APP/Src/app_main.c */
+/* USER CODE END AppTask_Status */
 
 /* Private application code --------------------------------------------------*/
 /* USER CODE BEGIN Application */
 
 /* USER CODE END Application */
-
