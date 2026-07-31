@@ -23,6 +23,7 @@
 #include "main.h"
 #include "app_main.h"
 #include "cmsis_os.h"
+#include "oled.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -80,8 +81,8 @@ const osThreadAttr_t Task_Sensor_attributes = {
 osThreadId_t Task_StatusHandle;
 const osThreadAttr_t Task_Status_attributes = {
   .name = "Task_Status",
-  .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityLow,
+  .stack_size = 256 * 4,
+  .priority = (osPriority_t) osPriorityBelowNormal,
 };
 /* Definitions for Queue_ControlCmd */
 osMessageQueueId_t Queue_ControlCmdHandle;
@@ -152,18 +153,48 @@ void MX_FREERTOS_Init(void) {
   /* Create the thread(s) */
   /* creation of Task_Safety */
   Task_SafetyHandle = osThreadNew(AppTask_Safety, NULL, &Task_Safety_attributes);
+  if (Task_SafetyHandle == NULL) {
+    Device_OLED_Clear();
+    Device_OLED_ShowString(0, 0, "ERR: TASK");
+    Device_OLED_ShowString(0, 2, "Safety Fail");
+    for (;;);
+  }
 
   /* creation of Task_MotorPID */
   Task_MotorPIDHandle = osThreadNew(AppTask_MotorPID, NULL, &Task_MotorPID_attributes);
+  if (Task_MotorPIDHandle == NULL) {
+    Device_OLED_Clear();
+    Device_OLED_ShowString(0, 0, "ERR: TASK");
+    Device_OLED_ShowString(0, 2, "MotorPID Fail");
+    for (;;);
+  }
 
   /* creation of Task_CommRX */
   Task_CommRXHandle = osThreadNew(AppTask_CommRX, NULL, &Task_CommRX_attributes);
+  if (Task_CommRXHandle == NULL) {
+    Device_OLED_Clear();
+    Device_OLED_ShowString(0, 0, "ERR: TASK");
+    Device_OLED_ShowString(0, 2, "CommRX Fail");
+    for (;;);
+  }
 
   /* creation of Task_Sensor */
   Task_SensorHandle = osThreadNew(AppTask_Sensor, NULL, &Task_Sensor_attributes);
+  if (Task_SensorHandle == NULL) {
+    Device_OLED_Clear();
+    Device_OLED_ShowString(0, 0, "ERR: TASK");
+    Device_OLED_ShowString(0, 2, "Sensor Fail");
+    for (;;);
+  }
 
   /* creation of Task_Status */
   Task_StatusHandle = osThreadNew(AppTask_Status, NULL, &Task_Status_attributes);
+  if (Task_StatusHandle == NULL) {
+    Device_OLED_Clear();
+    Device_OLED_ShowString(0, 0, "ERR: TASK");
+    Device_OLED_ShowString(0, 2, "Status Fail");
+    for (;;);
+  }
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */

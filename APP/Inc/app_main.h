@@ -37,6 +37,7 @@ extern osMessageQueueId_t Queue_ControlCmdHandle;
 extern osMutexId_t        Mutex_StateHandle;
 extern osSemaphoreId_t    Sem_UartRxHandle;
 extern SystemState_t      g_sys_state;
+extern volatile uint32_t  g_status_counter;
 
 /* =======================================================
  * 4. 应用层接口

@@ -48,14 +48,13 @@ void Device_OLED_Init(void) {
 
 /* 清除屏幕 */
 void Device_OLED_Clear(void) {
-    uint8_t i, n;
+    uint8_t i;
+    static uint8_t blank_line[128] = {0};
     for(i = 0; i < 8; i++) {  
         OLED_WriteCmd(0xB0 + i); // 设置页地址（0~7）
         OLED_WriteCmd(0x00);     // 设置显示位置—列低地址
         OLED_WriteCmd(0x10);     // 设置显示位置—列高地址   
-        for(n = 0; n < 128; n++) {
-            OLED_WriteData(0);   // 全局写 0 熄灭像素
-        }
+        BSP_I2C1_WriteMem(OLED_I2C_ADDR, 0x40, blank_line, 128);
     }
 }
 
@@ -68,7 +67,6 @@ static void OLED_SetPos(uint8_t x, uint8_t y) {
 /* * 对外 API：在指定位置显示一个字符 (8x16大小)
  */
 void Device_OLED_ShowChar(uint8_t x, uint8_t y, char chr) {
-    uint8_t i;
     uint8_t index = chr - 0x20; // 计算字符在字体数组中的索引
     
     // 检查字符是否在可打印范围内
@@ -81,19 +79,13 @@ void Device_OLED_ShowChar(uint8_t x, uint8_t y, char chr) {
     OLED_SetPos(x, y);
     
     // 显示上半部分(第1页)
-    for(i=0; i<FONT_8X16_WIDTH; i++)
-    {
-        OLED_WriteData(oled_font_8x16[index][i]);
-    }
+    BSP_I2C1_WriteMem(OLED_I2C_ADDR, 0x40, (uint8_t *)&oled_font_8x16[index][0], 8);
     
     // 设置下一页位置
     OLED_SetPos(x, y+1);
     
     // 显示下半部分(第2页)
-    for(i=0; i<FONT_8X16_WIDTH; i++)
-    {
-        OLED_WriteData(oled_font_8x16[index][i+8]);
-    }
+    BSP_I2C1_WriteMem(OLED_I2C_ADDR, 0x40, (uint8_t *)&oled_font_8x16[index][8], 8);
 }
 
 /* * 对外 API：显示字符串

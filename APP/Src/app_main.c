@@ -11,6 +11,7 @@
  * 全局系统状态
  * ======================================================= */
 SystemState_t g_sys_state = {0};
+volatile uint32_t g_status_counter = 0;// 用于状态显示任务的计数器
 
 /* =======================================================
  * App_Init: 应用层初始化 (在 RTOS 调度器启动前调用)
@@ -154,48 +155,52 @@ void AppTask_Status(void *argument)
     uint8_t  local_fault;
 
     for (;;) {
+        g_status_counter++;
+
         osMutexAcquire(Mutex_StateHandle, osWaitForever);
         memcpy(&local_sensor, &g_sys_state.sensor, sizeof(SensorDHT11_t));
         local_rpm    = g_sys_state.motor_rpm;
         local_fault  = g_sys_state.system_fault;
         osMutexRelease(Mutex_StateHandle);
 
-        Device_OLED_Clear();
+        /* 暂停调度器：防止 I2C 轮询期间被抢占导致 HAL 状态机错乱 */
+        vTaskSuspendAll();
+        {
+            Device_OLED_Clear();
 
-        /* Row 0: 系统状态 */
-        if (local_fault) {
-            Device_OLED_ShowString(0, 0, "SYS: FAULT!");
-        } else {
-            Device_OLED_ShowString(0, 0, "SYS: OK");
-        }
+            /* Row 0: 系统状态 */
+            snprintf(buf, sizeof(buf), "SYS:%lu", g_status_counter);
+            Device_OLED_ShowString(0, 0, buf);
 
-        /* Row 1: 温度 */
-        if (local_sensor.is_online) {
-            snprintf(buf, sizeof(buf), "TEMP: %d.%d C",
-                     local_sensor.temperature / 10,
-                     local_sensor.temperature % 10);
-        } else {
-            snprintf(buf, sizeof(buf), "TEMP: --.- C");
-        }
-        Device_OLED_ShowString(0, 1, buf);
+            /* Row 1: 温度 (页2-3) */
+            if (local_sensor.is_online) {
+                snprintf(buf, sizeof(buf), "TEMP: %d.%d C",
+                         local_sensor.temperature / 10,
+                         local_sensor.temperature % 10);
+            } else {
+                snprintf(buf, sizeof(buf), "TEMP: --.- C");
+            }
+            Device_OLED_ShowString(0, 2, buf);
 
-        /* Row 2: 湿度 */
-        if (local_sensor.is_online) {
-            snprintf(buf, sizeof(buf), "HUMI: %d.%d %%",
-                     local_sensor.humidity / 10,
-                     local_sensor.humidity % 10);
-        } else {
-            snprintf(buf, sizeof(buf), "HUMI: --.- %%");
-        }
-        Device_OLED_ShowString(0, 2, buf);
+            /* Row 2: 湿度 (页4-5) */
+            if (local_sensor.is_online) {
+                snprintf(buf, sizeof(buf), "HUMI: %d.%d %%",
+                         local_sensor.humidity / 10,
+                         local_sensor.humidity % 10);
+            } else {
+                snprintf(buf, sizeof(buf), "HUMI: --.- %%");
+            }
+            Device_OLED_ShowString(0, 4, buf);
 
-        /* Row 3: 电机状态 */
-        if (Motor_IsRunning()) {
-            snprintf(buf, sizeof(buf), "MOTOR: %d RPM", local_rpm);
-        } else {
-            snprintf(buf, sizeof(buf), "MOTOR: STOP");
+            /* Row 3: 电机状态 (页6-7) */
+            if (Motor_IsRunning()) {
+                snprintf(buf, sizeof(buf), "MOTOR: %d RPM", local_rpm);
+            } else {
+                snprintf(buf, sizeof(buf), "MOTOR: STOP");
+            }
+            Device_OLED_ShowString(0, 6, buf);
         }
-        Device_OLED_ShowString(0, 3, buf);
+        (void)xTaskResumeAll();
 
         osDelay(500);
     }
