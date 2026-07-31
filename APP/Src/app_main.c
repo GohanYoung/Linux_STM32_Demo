@@ -10,7 +10,7 @@
 /* =======================================================
  * 全局系统状态
  * ======================================================= */
-static SystemState_t g_sys_state = {0};
+SystemState_t g_sys_state = {0};
 
 /* =======================================================
  * App_Init: 应用层初始化 (在 RTOS 调度器启动前调用)
@@ -61,7 +61,7 @@ void AppTask_Safety(void *argument)
 /* =======================================================
  * Task_MotorPID: 电机 PID 控制任务 (高于普通优先级)
  *   周期: 10ms (100Hz)
- *   职责: 执行 PID 速度环计算，更新当前转速
+ *   职责: 状态同步 + 电机监控 (PID 计算由 TIM4 ISR 执行)
  * ======================================================= */
 void AppTask_MotorPID(void *argument)
 {
@@ -73,17 +73,8 @@ void AppTask_MotorPID(void *argument)
         vTaskDelayUntil(&xLastWakeTime, xPeriod);
 
         osMutexAcquire(Mutex_StateHandle, osWaitForever);
-        uint8_t running = Motor_IsRunning();
-        uint8_t fault   = g_sys_state.system_fault;
+        g_sys_state.motor_rpm = Motor_GetCurrentRPM();
         osMutexRelease(Mutex_StateHandle);
-
-        if (running && !fault) {
-            Motor_PID_Update();
-
-            osMutexAcquire(Mutex_StateHandle, osWaitForever);
-            g_sys_state.motor_rpm = Motor_GetCurrentRPM();
-            osMutexRelease(Mutex_StateHandle);
-        }
     }
 }
 

@@ -162,7 +162,13 @@ void MX_TIM4_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN TIM4_Init 2 */
+  htim4.Init.Prescaler = 72 - 1;
+  htim4.Init.Period = 10000 - 1;
+  HAL_TIM_Base_Init(&htim4);
 
+  HAL_NVIC_SetPriority(TIM4_IRQn, 1, 0);
+  HAL_NVIC_EnableIRQ(TIM4_IRQn);
+  HAL_TIM_Base_Start_IT(&htim4);
   /* USER CODE END TIM4_Init 2 */
 
 }

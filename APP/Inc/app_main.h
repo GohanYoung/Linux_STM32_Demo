@@ -36,6 +36,7 @@ typedef struct {
 extern osMessageQueueId_t Queue_ControlCmdHandle;
 extern osMutexId_t        Mutex_StateHandle;
 extern osSemaphoreId_t    Sem_UartRxHandle;
+extern SystemState_t      g_sys_state;
 
 /* =======================================================
  * 4. 应用层接口

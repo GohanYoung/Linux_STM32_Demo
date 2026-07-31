@@ -11,23 +11,6 @@ static volatile int32_t  g_last_encoder_count;
 static volatile int16_t  g_current_rpm;
 static volatile uint8_t  g_motor_running;
 
-static void Motor_TIM4_Init(void)
-{
-    __HAL_RCC_TIM4_CLK_ENABLE();
-
-    htim4.Instance = TIM4;
-    htim4.Init.Prescaler = 72 - 1;
-    htim4.Init.CounterMode = TIM_COUNTERMODE_UP;
-    htim4.Init.Period = 10000 - 1;
-    htim4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-    htim4.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
-    HAL_TIM_Base_Init(&htim4);
-
-    HAL_NVIC_SetPriority(TIM4_IRQn, 1, 0);
-    HAL_NVIC_EnableIRQ(TIM4_IRQn);
-    HAL_TIM_Base_Start_IT(&htim4);
-}
-
 void Motor_Init(void)
 {
     g_motor_running = 0;
@@ -46,8 +29,6 @@ void Motor_Init(void)
     __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_1, 0);
 
     HAL_TIM_Encoder_Start(&htim3, TIM_CHANNEL_ALL);
-
-    Motor_TIM4_Init();
 }
 
 void Motor_SetTargetRPM(int16_t rpm)
