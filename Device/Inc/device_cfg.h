@@ -20,8 +20,8 @@
  */
 typedef struct {
     uint8_t  is_online;      // 0:掉线, 1:在线
-    float    temperature;    // 温度值
-    float    humidity;       // 湿度值
+    int16_t  temperature;    // 温度值 (十分位整数, 例: 253 = 25.3°C)
+    int16_t  humidity;       // 湿度值 (十分位整数, 例: 567 = 56.7%)
     uint32_t last_update_ms; // 上次更新的时间戳 (用于应用层判断数据是否过期)
 } SensorDHT11_t;
 

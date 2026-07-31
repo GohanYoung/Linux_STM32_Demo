@@ -180,9 +180,9 @@ void AppTask_Status(void *argument)
 
         /* Row 1: 温度 */
         if (local_sensor.is_online) {
-            q15_t temp_q15 = Q15_FROM_FLOAT(local_sensor.temperature);
             snprintf(buf, sizeof(buf), "TEMP: %d.%d C",
-                     Q15_INTEGER(temp_q15), Q15_FRAC1(temp_q15));
+                     local_sensor.temperature / 10,
+                     local_sensor.temperature % 10);
         } else {
             snprintf(buf, sizeof(buf), "TEMP: --.- C");
         }
@@ -190,9 +190,9 @@ void AppTask_Status(void *argument)
 
         /* Row 2: 湿度 */
         if (local_sensor.is_online) {
-            q15_t humi_q15 = Q15_FROM_FLOAT(local_sensor.humidity);
             snprintf(buf, sizeof(buf), "HUMI: %d.%d %%",
-                     Q15_INTEGER(humi_q15), Q15_FRAC1(humi_q15));
+                     local_sensor.humidity / 10,
+                     local_sensor.humidity % 10);
         } else {
             snprintf(buf, sizeof(buf), "HUMI: --.- %%");
         }

@@ -21,6 +21,7 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "main.h"
+#include "app_main.h"
 #include "cmsis_os.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -142,7 +143,7 @@ void MX_FREERTOS_Init(void) {
 
   /* Create the queue(s) */
   /* creation of Queue_ControlCmd */
-  Queue_ControlCmdHandle = osMessageQueueNew (5, 16, &Queue_ControlCmd_attributes);
+  Queue_ControlCmdHandle = osMessageQueueNew (5, sizeof(ControlMsg_t), &Queue_ControlCmd_attributes);
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
