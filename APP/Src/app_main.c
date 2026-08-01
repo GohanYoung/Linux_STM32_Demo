@@ -163,44 +163,37 @@ void AppTask_Status(void *argument)
         local_fault  = g_sys_state.system_fault;
         osMutexRelease(Mutex_StateHandle);
 
-        /* 暂停调度器：防止 I2C 轮询期间被抢占导致 HAL 状态机错乱 */
-        vTaskSuspendAll();
-        {
-            Device_OLED_Clear();
+        /* Row 0: 系统状态 */
+        snprintf(buf, sizeof(buf), "SYS:%lu", g_status_counter);
+        Device_OLED_ShowStringLine(0, buf);
 
-            /* Row 0: 系统状态 */
-            snprintf(buf, sizeof(buf), "SYS:%lu", g_status_counter);
-            Device_OLED_ShowString(0, 0, buf);
-
-            /* Row 1: 温度 (页2-3) */
-            if (local_sensor.is_online) {
-                snprintf(buf, sizeof(buf), "TEMP: %d.%d C",
-                         local_sensor.temperature / 10,
-                         local_sensor.temperature % 10);
-            } else {
-                snprintf(buf, sizeof(buf), "TEMP: --.- C");
-            }
-            Device_OLED_ShowString(0, 2, buf);
-
-            /* Row 2: 湿度 (页4-5) */
-            if (local_sensor.is_online) {
-                snprintf(buf, sizeof(buf), "HUMI: %d.%d %%",
-                         local_sensor.humidity / 10,
-                         local_sensor.humidity % 10);
-            } else {
-                snprintf(buf, sizeof(buf), "HUMI: --.- %%");
-            }
-            Device_OLED_ShowString(0, 4, buf);
-
-            /* Row 3: 电机状态 (页6-7) */
-            if (Motor_IsRunning()) {
-                snprintf(buf, sizeof(buf), "MOTOR: %d RPM", local_rpm);
-            } else {
-                snprintf(buf, sizeof(buf), "MOTOR: STOP");
-            }
-            Device_OLED_ShowString(0, 6, buf);
+        /* Row 1: 温度 (页2-3) */
+        if (local_sensor.is_online) {
+            snprintf(buf, sizeof(buf), "TEMP: %d.%d C",
+                        local_sensor.temperature / 10,
+                        local_sensor.temperature % 10);
+        } else {
+            snprintf(buf, sizeof(buf), "TEMP: --.- C");
         }
-        (void)xTaskResumeAll();
+        Device_OLED_ShowStringLine(2, buf);
+
+        /* Row 2: 湿度 (页4-5) */
+        if (local_sensor.is_online) {
+            snprintf(buf, sizeof(buf), "HUMI: %d.%d %%",
+                        local_sensor.humidity / 10,
+                        local_sensor.humidity % 10);
+        } else {
+            snprintf(buf, sizeof(buf), "HUMI: --.- %%");
+        }
+        Device_OLED_ShowStringLine(4, buf);
+
+        /* Row 3: 电机状态 (页6-7) */
+        if (Motor_IsRunning()) {
+            snprintf(buf, sizeof(buf), "MOTOR: %d RPM", local_rpm);
+        } else {
+            snprintf(buf, sizeof(buf), "MOTOR: STOP");
+        }
+        Device_OLED_ShowStringLine(6, buf);
 
         osDelay(500);
     }

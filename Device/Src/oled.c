@@ -1,17 +1,11 @@
 #include "oled.h"
 #include "bsp_i2c.h" // 绝不包含 HAL，只调我们的 BSP 接口
 #include "oled_font.h"// 引入字库头文件
+#include <stddef.h>
 
 /* 底层写命令函数 (内部使用，不暴露给外部) */
 static void OLED_WriteCmd(uint8_t cmd) {
-    // SSD1306 规定：写命令时，内存地址(控制字节)为 0x00
     BSP_I2C1_WriteMem(OLED_I2C_ADDR, 0x00, &cmd, 1);
-}
-
-/* 底层写数据函数 (内部使用) */
-static void OLED_WriteData(uint8_t data) {
-    // SSD1306 规定：写显存数据时，内存地址(控制字节)为 0x40
-    BSP_I2C1_WriteMem(OLED_I2C_ADDR, 0x40, &data, 1);
 }
 
 /* OLED 初始化序列 (SSD1306 数据手册规定) */
@@ -104,9 +98,16 @@ void Device_OLED_ShowString(uint8_t x, uint8_t y, char *str) {
     }
 }
 
-void Device_OLED_ShowNum(uint8_t x, uint8_t y, uint32_t num, uint8_t len)
+/* 对外 API：在指定行显示字符串，自动右填充空格至 16 字符，覆盖旧内容 */
+void Device_OLED_ShowStringLine(uint8_t y, const char *str)
 {
-    char str[11]; // 最大支持10位数字
-    sprintf(str, "%0*lu", len, num);
-    Device_OLED_ShowString(x, y, str);
+    uint8_t x = 0;
+    uint8_t col = 0;
+
+    while (col < 16) {
+        char ch = (str != NULL && *str != '\0') ? *str++ : ' ';
+        Device_OLED_ShowChar(x, y, ch);
+        x += FONT_8X16_WIDTH;
+        col++;
+    }
 }
