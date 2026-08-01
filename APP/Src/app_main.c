@@ -1,4 +1,5 @@
 #include "app_main.h"
+#include "comm.h"
 #include "oled.h"
 #include "dht11.h"
 #include "motor.h"
@@ -26,6 +27,7 @@ void App_Init(void)
 
     Device_DHT11_Init();
     Motor_Init();
+    Comm_Init();
 
     BSP_Delay_ms(500);
     Device_OLED_Clear();

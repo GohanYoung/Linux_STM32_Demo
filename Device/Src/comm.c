@@ -1,33 +1,24 @@
 #include "comm.h"
+#include "bsp_uart.h"
 #include "motor.h"
 #include <string.h>
 
-/* =======================================================
- * 初始化（物理层由 CubeMX 生成的 USB CDC 初始化完成）
- * ======================================================= */
 void Comm_Init(void)
 {
-    /* USB CDC 初始化由 MX_USB_DEVICE_Init() 完成 */
+    BSP_UART1_Init();
+    BSP_UART1_StartRx();
 }
 
 void Comm_StartRx(void)
 {
-    /* USB CDC 接收由 USBD_CDC_SetRxBuffer 启动，在 usb_device.c 中配置 */
+    BSP_UART1_StartRx();
 }
-
-/* =======================================================
- * 发送数据（由具体物理层实现）
- * ======================================================= */
-extern void CDC_Transmit_FS(const uint8_t *data, uint16_t len);
 
 void Comm_Send(const uint8_t *data, uint16_t len)
 {
-    CDC_Transmit_FS(data, len);
+    BSP_UART1_Send(data, len);
 }
 
-/* =======================================================
- * 中断回调处理：解析帧并投递到消息队列
- * ======================================================= */
 void Comm_RxCallback(const uint8_t *buf, uint16_t len)
 {
     if (len != COMM_RX_FRAME_SIZE) {
@@ -43,9 +34,6 @@ void Comm_RxCallback(const uint8_t *buf, uint16_t len)
     }
 }
 
-/* =======================================================
- * 状态上报：将系统状态打包为 16 字节帧发送
- * ======================================================= */
 void Comm_SendStatus(const SystemState_t *state)
 {
     uint8_t tx_buf[COMM_TX_FRAME_SIZE] = {0};

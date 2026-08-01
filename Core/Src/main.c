@@ -20,6 +20,7 @@
 #include "main.h"
 #include "cmsis_os.h"
 #include "i2c.h"
+#include "usart.h"
 #include "tim.h"
 #include "gpio.h"
 
@@ -92,6 +93,7 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_I2C1_Init();
+  MX_USART1_UART_Init();
   MX_TIM2_Init();
   MX_TIM3_Init();
   MX_TIM4_Init();
