@@ -1,5 +1,7 @@
 #include "dht11.h"
 #include "bsp_dht11.h"
+#include "cmsis_os2.h"
+#include "FreeRTOS.h"
 
 void Device_DHT11_Init(void) {
     BSP_DHT11_HW_Init();    // 开启定时器
@@ -48,32 +50,43 @@ int8_t Device_DHT11_Read(SensorDHT11_t *sensor_data) {
 
     // 1. 单片机发送起始信号：拉低至少 18ms
     BSP_DHT11_SetPin(0);
-    BSP_Delay_us(20000); // 20ms
+    osDelay(20);
     
-    // 2. 单片机释放总线，等待传感器响应 (延时 20~40us)
+    /* 2. 即将开始对时序要求极高的微秒级通信，必须关闭所有中断！ */
+    portENTER_CRITICAL();
     BSP_DHT11_SetPin(1);
     BSP_Delay_us(30);
 
-    // 3. 检查传感器的应答信号 (传感器拉低 80us，再拉高 80us，如果没有先拉底再拉高，说明没应答)
-    if (Wait_Pin_State(0, 200) != DEV_OK) return DEV_ERROR; 
-    if (Wait_Pin_State(1, 200) != DEV_OK) return DEV_ERROR; 
-
-    // 4. 开始接收 40 位数据
-    for (i = 0; i < 5; i++) {
-        if (Read_Byte(&buf[i]) != DEV_OK) return DEV_ERROR;
+    /* 3. 检查传感器的应答信号 */
+    if (Wait_Pin_State(0, 200) != DEV_OK) {
+        portEXIT_CRITICAL(); // 无论对错，退出前必须释放临界区
+        return DEV_ERROR; 
+    }
+    if (Wait_Pin_State(1, 200) != DEV_OK) {
+        portEXIT_CRITICAL();
+        return DEV_ERROR; 
     }
 
-    // 5. 释放总线，结束通信
-    BSP_DHT11_SetPin(1);
+    /* 4. 接收 40 位数据 */
+    for (i = 0; i < 5; i++) {
+        if (Read_Byte(&buf[i]) != DEV_OK) {
+            portEXIT_CRITICAL(); 
+            return DEV_ERROR;
+        }
+    }
 
-    // 6. 数据校验 (最后 1 字节 = 前 4 字节之和)
+    /* 5. 通信完成，释放总线并退出临界区 */
+    BSP_DHT11_SetPin(1);
+    portEXIT_CRITICAL();
+    // 【临界区结束！如果刚才有 PID 中断被挂起，现在会立刻补执行，电机不受影响】
+
+    /* 6. 数据校验运算 */
     if (buf[0] + buf[1] + buf[2] + buf[3] == buf[4]) {
-        // DHT11 数据格式：湿度整数(0), 湿度小数(1), 温度整数(2), 温度小数(3)
         sensor_data->humidity    = (int16_t)(buf[0] * 10 + buf[1]);
         sensor_data->temperature = (int16_t)(buf[2] * 10 + buf[3]);
         sensor_data->is_online = 1;
         return DEV_OK;
     } else {
-        return DEV_ERROR; // 校验错
+        return DEV_ERROR;
     }
 }
