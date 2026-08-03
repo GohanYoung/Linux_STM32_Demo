@@ -4,5 +4,6 @@
 #include <stdint.h>
 
 void BSP_Delay_ms(uint32_t ms);
+void BSP_Light_led();
 
 #endif

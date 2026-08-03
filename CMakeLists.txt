@@ -26,7 +26,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # 3. Compiler & Core Settings (内核与编译选项)
 # ==========================================
 # 直接拆开写，不使用带双引号的变量
-add_compile_options(-mcpu=cortex-m3 -mthumb -Os -g -Wall -Wno-pointer-to-int-cast -Wno-int-to-pointer-cast)
+add_compile_options(-mcpu=cortex-m3 -mthumb -Os -g -Wall -Wno-pointer-to-int-cast -Wno-int-to-pointer-cast -ffunction-sections -fdata-sections)
 set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} -mcpu=cortex-m3 -mthumb")
 
 # 芯片宏定义 (保持启用 HAL 库驱动)

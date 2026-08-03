@@ -19,6 +19,7 @@ volatile uint32_t g_status_counter = 0;// 用于状态显示任务的计数器
  * ======================================================= */
 void App_Init(void)
 {
+    BSP_Delay_ms(100);
     memset(&g_sys_state, 0, sizeof(g_sys_state));
 
     Device_OLED_Init();
