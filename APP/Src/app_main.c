@@ -167,8 +167,12 @@ void AppTask_Status(void *argument)
         osMutexRelease(Mutex_StateHandle);
 
         /* Row 0: 系统状态 */
-        snprintf(buf, sizeof(buf), "SYS:%lu", g_status_counter);
-        Device_OLED_ShowStringLine(0, buf);
+        if(local_fault){
+            Device_OLED_ShowStringLine(0, "FAULT!");
+        }else{
+            snprintf(buf, sizeof(buf), "SYS:%lu", g_status_counter);
+            Device_OLED_ShowStringLine(0, buf);
+        }
 
         /* Row 1: 温度 (页2-3) */
         if (local_sensor.is_online) {

@@ -205,28 +205,3 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE END RTOS_EVENTS */
 
 }
-
-/* USER CODE BEGIN AppTask_Safety */
-/* Implementation moved to APP/Src/app_main.c */
-/* USER CODE END AppTask_Safety */
-
-/* USER CODE BEGIN AppTask_MotorPID */
-/* Implementation moved to APP/Src/app_main.c */
-/* USER CODE END AppTask_MotorPID */
-
-/* USER CODE BEGIN AppTask_CommRX */
-/* Implementation moved to APP/Src/app_main.c */
-/* USER CODE END AppTask_CommRX */
-
-/* USER CODE BEGIN AppTask_Sensor */
-/* Implementation moved to APP/Src/app_main.c */
-/* USER CODE END AppTask_Sensor */
-
-/* USER CODE BEGIN AppTask_Status */
-/* Implementation moved to APP/Src/app_main.c */
-/* USER CODE END AppTask_Status */
-
-/* Private application code --------------------------------------------------*/
-/* USER CODE BEGIN Application */
-
-/* USER CODE END Application */
