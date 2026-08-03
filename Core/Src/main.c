@@ -94,13 +94,10 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_DMA_Init();
-  HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET); 
   MX_I2C1_Init(); 
   MX_TIM2_Init();
   MX_TIM3_Init();
   MX_TIM4_Init();
-  for(volatile uint32_t i = 0; i < 2000000; i++);
-  HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
   App_Init();
